@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>俄罗斯方块</title>
+    <style>
+        body {
+           text-align: center; 
+        }
+        table {
+            display: inline-block;
+            height:100%;
+            max-height: 100%;
+            max-width: 100%;
+        }
+        td {
+            height:20px;
+            width:20px;
+            border:5px outset;
+            border-top-color: rgba(0,0,0,.1);
+            border-bottom-color: rgba(0,0,0,.7);
+            border-left-color: rgba(0,0,0,.2);
+            border-right-color: rgba(0,0,0,.2);
+        }
+        #point-wrap {
+            height:100px;
+            width:100%;
+            line-height: 100px;
+            font-size:60px;
+            text-align: center;
+            position:absolute;
+            right:0;
+            top:0;
+            opacity: 0.7;
+        }
+        #buttons {
+            position:absolute;
+            left:0;
+            bottom:0;
+            width:100%;
+            height:100px;
+        }
+        #button .changeStyle {
+            position:absolute;
+            left:0;
+            top:0;
+            width:100%;
+            height:100%;
+            background:rgba(255,255,255,.7);
+        }
+    </style>
+</head>
+<body>
+    <p id="point-wrap">0</p>
+    <table id="tetris"></table>
+    <div id="buttons">
+        <div class="changeStyle"></div>
+    </div>
+<script>
+    if(!localStorage.getItem("alert")){
+        localStorage.setItem('alert',1);
+        alert("空格键换行，上下左右键控制方块位置！");
+    }
+    var point = 0;
+    // 山
+    var model7 = {
+        name :'山',
+        color:'#a023ed',
+        index:0,
+        position:[3,-1],
+        type:[],
+        style:[
+            [
+                [0,0],
+                [1,0],
+                [1,-1],
+                [2,0]
+            ],
+            [
+                [0,0],
+                [0,-1],
+                [0,-2],
+                [1,-1]
+            ],
+            [
+                [0,-1],
+                [1,-1],
+                [1,0],
+                [2,-1]
+            ],
+            [
+                [0,-1],
+                [1,0],
+                [1,-1],
+                [1,-2]
+            ]
+        ]
+    };
+    // 田
+    var model6 = {
+        name :'田',
+        color:'#f0ef34',
+        index:0,
+        position:[3,-1],
+        type:[],
+        style:[
+            [
+                [0,0],
+                [0,-1],
+                [1,-1],
+                [1,0]
+            ]
+        ]
+    };
+    // 7
+    var model5 = {
+        name :'7',
+        color:'#efa027',
+        index:0,
+        position:[3,-1],
+        type:[],
+        style:[
+            [
+                [1,0],
+                [1,-1],
+                [1,-2],
+                [0,-2]
+            ],
+            [
+                [0,0],
+                [1,0],
+                [2,0],
+                [2,-1]
+            ],
+            [
+                [0,0],
+                [0,-1],
+                [0,-2],
+                [1,0]
+            ],
+            [
+                [0,0],
+                [0,-1],
+                [1,-1],
+                [2,-1]
+            ]
+        ]
+    };
+    // 厂
+    var model4 = {
+        name :'厂',
+        color:'#0921ec',
+        index:0,
+        position:[3,-1],
+        type:[],
+        style:[
+            [
+                [0,0],
+                [0,-1],
+                [0,-2],
+                [1,-2]
+            ],
+            [
+                [0,-1],
+                [1,-1],
+                [2,-1],
+                [2,0]
+            ],
+            [
+                [0,0],
+                [1,0],
+                [1,-1],
+                [1,-2]
+            ],
+            [
+                [0,0],
+                [1,0],
+                [2,0],
+                [0,-1]
+            ]
+        ]
+    };
+    // Z
+    var model3 = {
+        name :'Z',
+        color:'#ee0b19',
+        index:0,
+        position:[3,-1],
+        type:[],
+        style:[
+            [
+                [0,-1],
+                [1,0],
+                [1,-1],
+                [2,0]
+            ],
+            [
+                [0,0],
+                [0,-1],
+                [1,-1],
+                [1,-2]
+            ]
+        ]
+    };
+    // S
+    var model2 = {
+        name :'S',
+        color:'#27ee2c',
+        index:0,
+        position:[3,-1],
+        type:[],
+        style:[
+            [
+                [0,0],
+                [1,0],
+                [1,-1],
+                [2,-1]
+            ],
+            [
+                [1,0],
+                [1,-1],
+                [0,-1],
+                [0,-2]
+            ]
+        ]
+    };
+    // 一
+    var model1 = {
+        name :'一',
+        color:'#2af0ef',
+        index:0,
+        position:[3,-1],
+        type:[],
+        style:[
+            [
+                [0,0],
+                [1,0],
+                [2,0],
+                [3,0]
+            ],
+            [
+                [0,0],
+                [0,-1],
+                [0,-2],
+                [0,-3]
+            ]
+        ]
+    };
+    var models = [model1,model2,model3,model4,model5,model6,model7];
+    
+    function Model(obj){
+        this.name = obj.name;
+        this.color = obj.color;
+        this.index = obj.index;
+        this.position = tetris.extendArr(obj.position);
+        this.style = tetris.extendArr(obj.style);
+        this.type = this.changeStyle(this.style[this.index]);
+    };
+    Model.prototype = {
+        
+        changeStyle : function(obj){
+            var arr = [];
+            for(var i=0;i<obj.length;i++){
+                var a = [];
+                a[0]=obj[i][0]+this.position[0];
+                a[1]=obj[i][1]+this.position[1];
+                arr.push(a);
+            };
+            this.type = arr;
+            return arr;
+        }
+    };
+    function Tetris(){
+        
+    };
+    Tetris.prototype = {
+            cache : null,
+            cache2 : null,
+            timer : null,
+            tdList_arr : [],
+            nowModel : null,
+            init : function(){
+                    controller.changeModel();
+                    this.tdList_arr = this.makeArr();
+                    this.start();
+            },
+            start : function(){
+                var _this = this;
+                this.timer = null;
+                this.timer = setInterval(function(){
+                    controller.dropDown();
+                    _this.render();
+                    tetris.nowModel.position[1]++;
+                },500)
+            },
+            render : (function(){
+                var html = '';
+                html+="<table>";
+                for(var i=0;i<20;i++){
+                        html+='<tr>';
+                        for(var j=0;j<10;j++){
+                                html+='<td class="empty"></td>';
+                        };
+                        html+='</tr>';
+                };
+                html+="</table>";
+                document.getElementById("tetris").innerHTML = html;
+
+                return function(){
+
+                    var obj = this.nowModel;
+
+                    if(this.cache){
+                        for(var k=0;k<this.cache.length;k++){
+                            if(this.cache[k][1]<0 ){
+                                continue;
+                            };
+                            this.tdList_arr[this.cache[k][1]][this.cache[k][0]] = 'none';
+                        };
+                    };
+                    for(var g=0;g<obj.type.length;g++){
+                        if(obj.type[g][1]<0 ){
+                            continue;
+                        };
+                        this.tdList_arr[obj.type[g][1]][obj.type[g][0]] = obj.color;
+                    };
+                    var trs = document.getElementsByTagName("tr");
+                    for(var i=0;i<this.tdList_arr.length;i++){
+                        for(var j=0;j<this.tdList_arr[i].length;j++){
+                            trs[i].getElementsByTagName("td")[j].style.background = this.tdList_arr[i][j];
+                        }
+                    };
+                }
+            })(),
+            makeArr : function(){
+                var arr = [];
+                for(var i=0;i<20;i++){
+                    var c_obj = [];
+                    for(var g=0;g<10;g++){
+                        c_obj[g]="none";
+                    };
+                    arr.push(c_obj);
+                }
+                return arr;
+            },
+            extendArr : function(obj){
+                var o = [];
+                for(var i=0;i<obj.length;i++){
+                    this.isArray(obj[i])? o[i]=this.extendArr(obj[i]):o[i]=obj[i];
+                };
+                return o;
+            },
+            isArray : function(arr){
+                return Object.prototype.toString.call(arr)=='[object Array]';
+            }
+    };
+
+    
+    function Controller(){
+        this.init();
+    };
+    
+    Controller.prototype = {
+        
+        init : function(){
+            var _this = this;
+            // 空格32 左上右下37 38 39 40
+            document.onkeydown = function(e){
+                var obj = tetris.nowModel,
+                    type_arr = tetris.extendArr(obj.type),
+                    xArr = [],
+                    yArr = [];
+
+                for(var j=0;j<obj.type.length;j++){
+                    xArr.push(obj.type[j][0]);
+                    yArr.push(obj.type[j][1]);
+                };
+                var max_y = Math.max.apply(Math,yArr),
+                    min_x = Math.min.apply(Math,xArr),
+                    max_x = Math.max.apply(Math,xArr);
+
+                var cache_obj = {
+                    index:obj.index,
+                    type:tetris.extendArr(obj.type),
+                    position:tetris.extendArr(obj.position)
+                };
+
+                tetris.cache = tetris.extendArr(obj.type);
+                switch(e.keyCode){
+                    case 32:
+                    obj.index++;
+                    obj.index = obj.index%(obj.style.length);
+                    obj.changeStyle(obj.style[obj.index]);
+                    if(_this.checkHadBox(obj.type)){
+                        obj.index = cache_obj.index;
+                        obj.type = cache_obj.type;
+                        return false;
+                    }
+                    break;
+                    case 37:
+                    controller.changePosition("left",obj);
+                    obj.position[0]--;
+
+                    if(min_x<=0 || _this.checkHadBox(obj.type)){
+                        obj.position = cache_obj.position;
+                        obj.type = cache_obj.type;
+                        return false;
+                    }
+                    break;
+                    case 39:
+                    
+                    controller.changePosition("right",obj);
+                    obj.position[0]++;
+                    if(min_x<0 || _this.checkHadBox(obj.type)){
+                        obj.position = cache_obj.position;
+                        obj.type = cache_obj.type;
+                        return false;
+                    }
+                    break;
+                    case 40:
+                    controller.dropDown();
+                    obj.position[1]++;
+                    if(min_x<0 || _this.checkHadBox(obj.type)){
+                        obj.position = cache_obj.position;
+                        obj.type = cache_obj.type;
+                        return false;
+                    }
+                    break;
+                };
+
+                    console.log('xuanran');
+                    tetris.render();
+                
+            }
+        },
+        dropDown : function(){
+                var obj = controller.changePosition("down",tetris.nowModel);
+                this.check(obj[0],obj[1],obj[2]);
+        },
+        changePosition : function(fx,obj){
+
+            var arr = obj.type,
+                max_x=0,
+                min_x=0,
+                max_y=0,
+                x = [],
+                y = [];
+
+            tetris.cache = tetris.extendArr(obj.type);
+
+            for(var i=0;i<arr.length;i++){
+                switch(fx){
+                    case 'down':
+                    y.push(++arr[i][1]);
+                    break;
+                    case 'left':
+                    x.push(--arr[i][0]);
+                    break;
+                    case 'right':
+                    arr[i][0]++;
+                    break;
+                };
+                
+            };
+            return [x,y,arr];
+        },
+        checkHadBox : function(arr){
+            var trs = document.getElementsByTagName("tr");
+            for(var i=0;i<arr.length;i++){
+                
+                if( arr[i][0]>9 ||
+                 (trs[arr[i][1]] &&
+                  trs[arr[i][1]].getElementsByTagName("td")[arr[i][0]] &&
+                   trs[arr[i][1]].getElementsByTagName("td")[arr[i][0]].className=='had' ) ){
+                       console.log('进去了')
+                    return true;
+                };
+            }
+        },
+        check : function(xArr,yArr,arr){
+            var max_y = Math.max.apply(Math,yArr),
+                min_x = Math.min.apply(Math,xArr),
+                max_x = Math.max.apply(Math,xArr),
+                trs = document.getElementsByTagName("tr");
+            
+            if(max_y>=20 || this.check2(arr)){
+                
+                
+                for(var k=0;k<tetris.cache.length;k++){
+                    trs[tetris.cache[k][1]].getElementsByTagName("td")[tetris.cache[k][0]].className="had";
+                };
+
+                // 计算得分
+                this.caculate();
+                
+                this.changeModel();
+                tetris.cache = null;
+            }
+        },
+        caculate : function(){
+            var trs = document.getElementsByTagName("tr"),
+                arr = [],
+                bool;
+            for(var i=0;i<tetris.tdList_arr.length;i++){
+                var bool = tetris.tdList_arr[i].some(function(element){
+                    return element == 'none';
+                });
+                if(!bool){
+                    arr.push(i);
+                }
+            };
+            if(arr.length<=0) return false;
+            arr.reverse();
+            for(var g=0;g<arr.length;g++){
+                tetris.tdList_arr.splice(arr[g],1);
+            };
+            
+            for(var l=0;l<arr.length;l++){
+                var empty_arr = ['none','none','none','none','none','none','none','none','none','none'];
+                
+                tetris.tdList_arr.unshift(empty_arr);
+            };
+            
+            for(var i=0;i<tetris.tdList_arr.length;i++){
+                for(var j=0;j<tetris.tdList_arr[i].length;j++){
+                    trs[i].getElementsByTagName("td")[j].style.background = tetris.tdList_arr[i][j];
+                    if(trs[i].getElementsByTagName("td")[j].style.background=='none'){
+                        trs[i].getElementsByTagName("td")[j].className = "empty";
+                    }else {
+                        trs[i].getElementsByTagName("td")[j].className = "had";
+                    }
+                }
+            };
+            
+            document.getElementById("point-wrap").innerHTML = point = point + 2*(arr.length)-1;
+        },
+        check2 : function(arr){
+            var trs = document.getElementsByTagName("tr"),
+                td;
+            for(var i=0;i<arr.length;i++){
+                
+                if( arr[i][1] >=0 &&
+                 trs[arr[i][1]].getElementsByTagName("td")[arr[i][0]] &&
+                  trs[arr[i][1]].getElementsByTagName("td")[arr[i][0]].className == 'had' ){
+                    console.log("碰到了");
+                    for(var k=0;k<tetris.cache.length;k++){
+                        trs[tetris.cache[k][1]].getElementsByTagName("td")[tetris.cache[k][0]].className="had";
+                    };
+                    return true;
+                }
+            }
+        },
+        changeModel : function(){
+            var index = Math.floor(Math.random()*7),
+                model = new Model(models[index]);
+            tetris.nowModel = model;
+        }
+    };
+    var controller = new Controller();
+    var tetris = new Tetris();
+    tetris.init();
+</script>
+</body>
+</html>
