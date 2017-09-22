@@ -247,7 +247,7 @@
         ]
     };
     var models = [model1,model2,model3,model4,model5,model6,model7];
-    
+    // 创建方块类
     function Model(obj){
         this.name = obj.name;
         this.color = obj.color;
@@ -274,12 +274,12 @@
         
     };
     Tetris.prototype = {
-            cache : null,
+            cache : null,   // 方块缓存1
             cache2 : null,
-            timer : null,
-            tdList_arr : [],
-            nowModel : null,
-            init : function(){
+            timer : null,   // 定时器对象
+            tdList_arr : [],  // 表格数组
+            nowModel : null,   // 当前模块
+            init : function(){   // 初始化
                     controller.changeModel();
                     this.tdList_arr = this.makeArr();
                     this.start();
@@ -293,7 +293,7 @@
                     tetris.nowModel.position[1]++;
                 },500)
             },
-            render : (function(){
+            render : (function(){     // 渲染试图
                 var html = '';
                 html+="<table>";
                 for(var i=0;i<20;i++){
@@ -305,11 +305,11 @@
                 };
                 html+="</table>";
                 document.getElementById("tetris").innerHTML = html;
-
+                // 闭包 第一次走时创建table
                 return function(){
 
                     var obj = this.nowModel;
-
+                    // 方格上一个位置，目的清楚上一个位置留下的颜色
                     if(this.cache){
                         for(var k=0;k<this.cache.length;k++){
                             if(this.cache[k][1]<0 ){
@@ -318,12 +318,14 @@
                             this.tdList_arr[this.cache[k][1]][this.cache[k][0]] = 'none';
                         };
                     };
+                    // 方格当前位置
                     for(var g=0;g<obj.type.length;g++){
                         if(obj.type[g][1]<0 ){
                             continue;
                         };
                         this.tdList_arr[obj.type[g][1]][obj.type[g][0]] = obj.color;
                     };
+                    // 渲染视图
                     var trs = document.getElementsByTagName("tr");
                     for(var i=0;i<this.tdList_arr.length;i++){
                         for(var j=0;j<this.tdList_arr[i].length;j++){
@@ -332,7 +334,7 @@
                     };
                 }
             })(),
-            makeArr : function(){
+            makeArr : function(){   // 创建嵌套数组
                 var arr = [];
                 for(var i=0;i<20;i++){
                     var c_obj = [];
@@ -343,19 +345,19 @@
                 }
                 return arr;
             },
-            extendArr : function(obj){
+            extendArr : function(obj){  // 嵌套数组继承
                 var o = [];
                 for(var i=0;i<obj.length;i++){
                     this.isArray(obj[i])? o[i]=this.extendArr(obj[i]):o[i]=obj[i];
                 };
                 return o;
             },
-            isArray : function(arr){
+            isArray : function(arr){     // 判断是否为数组
                 return Object.prototype.toString.call(arr)=='[object Array]';
             }
     };
 
-    
+    // 控制器
     function Controller(){
         this.init();
     };
@@ -365,6 +367,7 @@
         init : function(){
             var _this = this;
             // 空格32 左上右下37 38 39 40
+            // 键盘操作
             document.onkeydown = function(e){
                 var obj = tetris.nowModel,
                     type_arr = tetris.extendArr(obj.type),
@@ -433,11 +436,11 @@
                 
             }
         },
-        dropDown : function(){
+        dropDown : function(){  // 方块下降的方法
                 var obj = controller.changePosition("down",tetris.nowModel);
                 this.check(obj[0],obj[1],obj[2]);
         },
-        changePosition : function(fx,obj){
+        changePosition : function(fx,obj){    // 改变方块位置
 
             var arr = obj.type,
                 max_x=0,
@@ -464,7 +467,7 @@
             };
             return [x,y,arr];
         },
-        checkHadBox : function(arr){
+        checkHadBox : function(arr){      // 检测下一个位置是否已经有格子
             var trs = document.getElementsByTagName("tr");
             for(var i=0;i<arr.length;i++){
                 
@@ -477,7 +480,7 @@
                 };
             }
         },
-        check : function(xArr,yArr,arr){
+        check : function(xArr,yArr,arr){    // 最后判断
             var max_y = Math.max.apply(Math,yArr),
                 min_y = Math.min.apply(Math,yArr),
                 min_x = Math.min.apply(Math,xArr),
@@ -499,7 +502,7 @@
                 tetris.cache = null;
             }
         },
-        caculate : function(){
+        caculate : function(){              // 计算得分方法
             var trs = document.getElementsByTagName("tr"),
                 arr = [],
                 bool;
@@ -536,7 +539,7 @@
             
             document.getElementById("point-wrap").innerHTML = point = point + 2*(arr.length)-1;
         },
-        check2 : function(arr){
+        check2 : function(arr){                 // 判断是否碰到格子，如果碰到暂停
             var trs = document.getElementsByTagName("tr"),
                 td;
             for(var i=0;i<arr.length;i++){
@@ -557,7 +560,7 @@
                 }
             }
         },
-        changeModel : function(){
+        changeModel : function(){               // 创建下一个方块
             var index = Math.floor(Math.random()*7),
                 model = new Model(models[index]);
             tetris.nowModel = model;
