@@ -251,9 +251,9 @@
     function Model(obj){
         this.name = obj.name;
         this.color = obj.color;
-        this.index = obj.index;
         this.position = tetris.extendArr(obj.position);
         this.style = tetris.extendArr(obj.style);
+        this.index = Math.floor(Math.random()*(this.style.length)),
         this.type = this.changeStyle(this.style[this.index]);
     };
     Model.prototype = {
@@ -479,6 +479,7 @@
         },
         check : function(xArr,yArr,arr){
             var max_y = Math.max.apply(Math,yArr),
+                min_y = Math.min.apply(Math,yArr),
                 min_x = Math.min.apply(Math,xArr),
                 max_x = Math.max.apply(Math,xArr),
                 trs = document.getElementsByTagName("tr");
@@ -486,10 +487,11 @@
             if(max_y>=20 || this.check2(arr)){
                 
                 
+
                 for(var k=0;k<tetris.cache.length;k++){
                     trs[tetris.cache[k][1]].getElementsByTagName("td")[tetris.cache[k][0]].className="had";
                 };
-
+                
                 // 计算得分
                 this.caculate();
                 
@@ -544,6 +546,11 @@
                   trs[arr[i][1]].getElementsByTagName("td")[arr[i][0]].className == 'had' ){
                     console.log("碰到了");
                     for(var k=0;k<tetris.cache.length;k++){
+                        if(tetris.cache[k][1]<0){
+                            alert('END!');
+                            window.location.reload();
+                            return false;
+                        }
                         trs[tetris.cache[k][1]].getElementsByTagName("td")[tetris.cache[k][0]].className="had";
                     };
                     return true;
